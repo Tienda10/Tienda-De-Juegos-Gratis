@@ -57,79 +57,6 @@
             backdrop-filter: blur(2px); /* Un ligero desenfoque para que no distraiga */
         }
 
-        /* --- Share Gate (Bloqueo de Acceso) --- */
-        .share-gate {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.95);
-            z-index: 9999; /* Por encima de todo */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            backdrop-filter: blur(10px);
-            overflow: hidden;
-        }
-
-        /* Fondo con imagen desenfocada */
-        .share-gate::before {
-            content: "";
-            position: absolute;
-            top: -20px; left: -20px; right: -20px; bottom: -20px;
-            background: url('minecraft.jpeg') no-repeat center center/cover;
-            filter: blur(15px) brightness(0.4);
-            z-index: -1;
-        }
-
-        .gate-content {
-            background: linear-gradient(145deg, #1a1a24, #20202c);
-            padding: 3rem 2rem;
-            border-radius: 20px;
-            text-align: center;
-            max-width: 450px;
-            width: 90%;
-            box-shadow: 0 0 50px rgba(0, 116, 228, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .gate-icon {
-            font-size: 4rem;
-            margin-bottom: 1rem;
-            animation: bounce 2s infinite;
-        }
-
-        @keyframes bounce {
-            0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
-            40% {transform: translateY(-20px);}
-            60% {transform: translateY(-10px);}
-        }
-
-        .progress-container {
-            width: 100%;
-            height: 10px;
-            background-color: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            overflow: hidden;
-            margin-bottom: 10px;
-            margin-top: 20px;
-        }
-
-        .progress-bar {
-            height: 100%;
-            width: 0%;
-            background: linear-gradient(90deg, #ff0055, #ff5500);
-            transition: width 0.5s ease;
-        }
-
-        /* Animación para el icono de éxito */
-        @keyframes successPop {
-            0% { transform: scale(0) rotate(-45deg); opacity: 0; }
-            70% { transform: scale(1.2) rotate(10deg); }
-            100% { transform: scale(1) rotate(0); opacity: 1; }
-        }
-
         /* --- Sidebar --- */
         .sidebar {
             width: 260px;
@@ -779,22 +706,6 @@
     <!-- Capa para oscurecer el video -->
     <div class="video-overlay"></div>
 
-    <!-- Share Gate (Bloqueo de Acceso) -->
-    <div id="share-gate" class="share-gate" style="display: none;">
-        <div class="gate-content">
-            <div class="gate-icon">🔒</div>
-            <h2 style="margin-bottom: 1rem;">¡Acceso Restringido!</h2>
-            <p style="color: var(--text-muted);">Para ingresar a la tienda y descargar juegos gratis, debes compartir nuestra página con <strong>1 amigo</strong> o grupo.</p>
-            
-            <div class="progress-container">
-                <div class="progress-bar" id="gate-progress"></div>
-            </div>
-            <p style="margin-bottom: 2rem; font-weight: bold;">Progreso: <span id="share-count">0</span>/1 Compartido</p>
-
-            <button id="gate-share-btn" class="tutorial-btn" style="margin: 0; width: 100%; justify-content: center;">📢 COMPARTIR AHORA</button>
-        </div>
-    </div>
-
     <!-- Sidebar -->
     <aside class="sidebar">
         <div class="logo">
@@ -1234,17 +1145,6 @@
         </div>
     </div>
 
-    <!-- Modal de Éxito (Desbloqueo) -->
-    <div id="unlock-modal" class="modal" style="z-index: 10000;">
-        <div class="modal-content" style="border: 2px solid #00ff88; box-shadow: 0 0 60px rgba(0, 255, 136, 0.2);">
-            <div style="font-size: 5rem; margin-bottom: 1rem; animation: successPop 0.8s ease-out;">🎉</div>
-            <h2 style="color: #00ff88; font-size: 2.2rem; text-transform: uppercase; margin-bottom: 10px; text-shadow: 0 0 20px rgba(0,255,136,0.5);">¡Felicidades!</h2>
-            <h3 style="color: white; font-size: 1.2rem; margin-bottom: 1.5rem;">Has desbloqueado el acceso total</h3>
-            <p style="color: #ccc; margin-bottom: 2rem;">Gracias por compartir. Ahora puedes disfrutar de todas las descargas gratuitas.</p>
-            <button id="enter-store-btn" class="tutorial-btn" style="margin: 0; width: 100%; justify-content: center; background: linear-gradient(90deg, #00b09b, #96c93d); border: none; box-shadow: 0 0 30px rgba(0, 255, 136, 0.4);">🚀 ENTRAR A LA TIENDA</button>
-        </div>
-    </div>
-
     <script>
         // Generar Recomendados Aleatorios
         const recommendedGrid = document.getElementById('recommended-grid');
@@ -1426,95 +1326,6 @@
             if (e.target == modal) {
                 modal.style.display = 'none';
             }
-        });
-
-        // --- Lógica del Share Gate (Bloqueo) ---
-        const shareGate = document.getElementById('share-gate');
-        const gateShareBtn = document.getElementById('gate-share-btn');
-        const shareCountSpan = document.getElementById('share-count');
-        const gateProgress = document.getElementById('gate-progress');
-        
-        // Configuración
-        const REQUIRED_SHARES = 1;
-        const ACCESS_DURATION = 24 * 60 * 60 * 1000; // 24 horas en milisegundos
-
-        let currentShares = parseInt(localStorage.getItem('nexus_share_count')) || 0;
-        const accessTimestamp = localStorage.getItem('nexus_access_granted');
-        let isAccessGranted = false;
-
-        // Verificar si el acceso sigue vigente (menos de 24 horas)
-        if (accessTimestamp) {
-            const now = Date.now();
-            if (now - parseInt(accessTimestamp) < ACCESS_DURATION) {
-                isAccessGranted = true;
-            } else {
-                // Han pasado 24 horas: Reiniciar todo para pedir compartir de nuevo
-                localStorage.removeItem('nexus_access_granted');
-                localStorage.removeItem('nexus_share_count');
-                currentShares = 0;
-            }
-        }
-
-        // Función para actualizar la barra de progreso
-        function updateGateUI() {
-            shareCountSpan.textContent = currentShares;
-            const percentage = (currentShares / REQUIRED_SHARES) * 100;
-            gateProgress.style.width = `${percentage}%`;
-        }
-
-        // Verificar si el usuario ya tiene acceso
-        if (!isAccessGranted) {
-            shareGate.style.display = 'flex'; // Mostrar bloqueo
-            updateGateUI();
-        }
-
-        gateShareBtn.addEventListener('click', async () => {
-            const title = "Gaming Station - Juegos Gratis";
-            const text = "¡Descarga los mejores juegos gratis para PC y Android en Gaming Station!";
-            const url = window.location.href;
-
-            // Intentar compartir
-            if (navigator.share) {
-                try {
-                    await navigator.share({ title, text, url });
-                    incrementShare();
-                } catch (err) {
-                    // Si cancela o hay error, igual contamos (para no frustrar al usuario)
-                    incrementShare(); 
-                }
-            } else {
-                // Fallback para PC (copiar al portapapeles)
-                try {
-                    await navigator.clipboard.writeText(`${text} ${url}`);
-                    alert('✅ Enlace copiado. ¡Pégalo en tus chats para compartir!');
-                } catch (err) {
-                    console.error('Error al copiar:', err);
-                }
-                incrementShare(); // Permitir acceso de todos modos
-            }
-        });
-
-        function incrementShare() {
-            if (currentShares < REQUIRED_SHARES) {
-                currentShares++;
-                localStorage.setItem('nexus_share_count', currentShares);
-                updateGateUI();
-            }
-
-            if (currentShares >= REQUIRED_SHARES) {
-                setTimeout(() => {
-                    localStorage.setItem('nexus_access_granted', Date.now().toString()); // Guardar hora actual
-                    shareGate.style.display = 'none'; // Desbloquear
-                    document.getElementById('unlock-modal').style.display = 'flex';
-                }, 500);
-            }
-        }
-
-        // Botón para entrar a la tienda después de desbloquear
-        document.getElementById('enter-store-btn').addEventListener('click', () => {
-            localStorage.setItem('nexus_access_granted', Date.now().toString()); // Confirmar hora al entrar
-            document.getElementById('unlock-modal').style.display = 'none';
-            document.getElementById('share-gate').style.display = 'none';
         });
 
         // --- Lógica para ocultar el logo al hacer scroll ---
