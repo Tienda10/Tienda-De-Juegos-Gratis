@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gaming Station - Descargas Gratuitas</title>
 
+    <script src="https://pl28487072.effectivegatecpm.com/97/a3/07/97a307f0a9348d65f10839416e1935cf.js" async></script>
+
     <style>
         /* --- Variables y Reset --- */
         :root {
@@ -45,6 +47,7 @@
             min-height: 100%;
             z-index: -10; /* Detrás de todo */
             object-fit: cover;
+            will-change: transform; /* Optimización GPU */
         }
 
         .video-overlay {
@@ -89,6 +92,7 @@
             max-height: 250px; /* Más altura permitida para el formato vertical */
             opacity: 1;
             overflow: hidden;
+            will-change: max-height, opacity, transform;
         }
 
         .logo.hidden {
@@ -177,6 +181,7 @@
             transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
             backdrop-filter: blur(10px);
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            will-change: transform, box-shadow;
         }
 
         .search-wrapper:focus-within {
@@ -359,6 +364,7 @@
             flex-direction: column;
             position: relative;
             cursor: pointer;
+            will-change: transform;
         }
 
         .game-card:hover {
@@ -637,6 +643,7 @@
                 border-bottom: 1px solid rgba(255,255,255,0.1);
                 transition: transform 0.3s ease; /* Usar transform es más fluido */
                 margin-top: 0;
+                will-change: transform;
             }
             .sidebar.hidden-mobile {
                 transform: translateY(-100%); /* Ocultar deslizando hacia arriba */
@@ -693,6 +700,30 @@
             .share-btn { width: 24px; height: 24px; font-size: 0.8rem; }
             .game-image { margin-bottom: 3px; border-radius: 6px; }
             .card-actions { gap: 3px; }
+
+            /* --- OPTIMIZACIONES DE RENDIMIENTO (MÓVIL) --- */
+            /* 1. Desactivar video de fondo en móvil (ahorra mucha batería y RAM) */
+            #bg-video { display: none; }
+            body { background: linear-gradient(180deg, #121212 0%, #1a1a24 100%); }
+
+            /* 2. Eliminar efectos de desenfoque (blur) costosos */
+            .sidebar, .search-wrapper, .search-suggestions, .modal-content, .video-overlay, .welcome-content {
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
+                background-color: rgba(20, 20, 25, 0.98) !important; /* Fondo sólido casi opaco */
+            }
+
+            /* 3. Simplificar sombras y bordes */
+            .game-card, .search-wrapper, .welcome-content {
+                box-shadow: none !important;
+                border: 1px solid rgba(255,255,255,0.15);
+            }
+
+            /* 4. Desactivar animaciones decorativas pesadas */
+            .welcome-content::before, .icon-ring, .loader-bar::before {
+                animation: none !important;
+                display: none;
+            }
         }
 
         /* --- Welcome Overlay (Anuncio de Bienvenida) --- */
@@ -931,7 +962,7 @@
 <body>
 
     <!-- Video de Fondo -->
-    <video autoplay muted loop id="bg-video">
+    <video autoplay muted loop playsinline id="bg-video">
         <source src="https://assets.mixkit.co/videos/preview/mixkit-abstract-blue-digital-grid-2689-large.mp4" type="video/mp4">
         <source src="https://videos.pexels.com/video-files/3209828/3209828-hd_1280_720_25fps.mp4" type="video/mp4">
         Tu navegador no soporta video HTML5.
@@ -1582,6 +1613,7 @@
         // --- Lógica para ocultar el logo al hacer scroll ---
         const logo = document.querySelector('.logo');
         const sidebar = document.querySelector('.sidebar');
+        const mainContent = document.querySelector('.main-content'); // Cachear selector para rendimiento
         let lastScrollTop = 0;
         let ticking = false; // Para optimizar rendimiento
 
@@ -1592,7 +1624,6 @@
 
             // Detectar si estamos al final de la página (Zona Segura)
             // Esto evita el parpadeo por "rebote" al llegar al fondo
-            const mainContent = document.querySelector('.main-content');
             const isAtBottom = mainContent.scrollHeight - mainContent.scrollTop <= mainContent.clientHeight + 50;
             const isMobileAtBottom = (window.innerHeight + window.scrollY) >= document.body.offsetHeight - 50;
 
@@ -1619,7 +1650,7 @@
 
         // Escuchar scroll en ambos contenedores (PC y Móvil)
         // Usamos requestAnimationFrame para que sea ultra suave y no parpadee
-        document.querySelector('.main-content').addEventListener('scroll', (e) => {
+        mainContent.addEventListener('scroll', (e) => {
             if (!ticking) {
                 window.requestAnimationFrame(() => {
                     handleScroll(e.target.scrollTop);
