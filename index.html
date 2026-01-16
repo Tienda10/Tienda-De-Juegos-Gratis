@@ -626,7 +626,10 @@
         @media (max-width: 768px) {
             body {
                 flex-direction: column;
-                overflow: auto;
+                overflow-y: auto;
+                overflow-x: hidden;
+                height: auto;
+                min-height: 100vh;
             }
             .sidebar {
                 position: fixed; /* Fijar para evitar saltos de layout */
@@ -669,6 +672,8 @@
             .main-content { 
                 padding: 5px;
                 padding-top: 140px; /* Compensar el espacio de la barra fija */
+                overflow: visible;
+                height: auto;
             }
             .hero { padding: 2rem; }
             .hero h2 { font-size: 1.8rem; }
